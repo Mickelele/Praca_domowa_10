@@ -76,14 +76,14 @@ public class PrescriptionService
     {
         if (prescriptionInsertSchemaDto.Medicaments.Count > 10)
         {
-            throw new InvalidOperationException($"Zbyt duza ilosc lekow na recepcie");
+            throw new Exception($"Zbyt duza ilosc lekow na recepcie");
         }
 
         foreach (var m in prescriptionInsertSchemaDto.Medicaments)
         {
             if (!_context.Medicaments.Any(e => e.IdMedicament == m.IdMedicament))
             {
-                throw new InvalidOperationException($"Lek o id: {m.IdMedicament} nie istnieje.");
+                throw new Exception($"Lek o id: {m.IdMedicament} nie istnieje.");
             }
         }
     }
@@ -93,7 +93,7 @@ public class PrescriptionService
     {
         if (!(prescriptionInsertSchemaDto.DueDate >= prescriptionInsertSchemaDto.Date))
         {
-            throw new InvalidOperationException($"Blad w dacie");
+            throw new Exception($"Blad w dacie");
         }
     }
     

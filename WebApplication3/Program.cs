@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using WebApplication3.Context;
 using WebApplication3.Controllers;
+using WebApplication3.Middlewares;
 using WebApplication3.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,13 +34,13 @@ builder.Services.AddAuthentication(options =>
 {
     opt.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,   //by who
-        ValidateAudience = true, //for whom
+        ValidateIssuer = true,   
+        ValidateAudience = true, 
         ValidateLifetime = true,
         ClockSkew = TimeSpan.FromMinutes(2),
-        ValidIssuer = "https://localhost:5001", //should come from configuration
-        ValidAudience = "https://localhost:5001", //should come from configuration
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["SecretKey"]))
+        ValidIssuer = "https://localhost:5001", 
+        ValidAudience = "https://localhost:5001", 
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("8hTfGvUWfZXNz7Dk5JH7fF3sDq8fJ9x2"))
     };
 
     opt.Events = new JwtBearerEvents
@@ -63,9 +64,9 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.FromMinutes(2),
         ValidIssuer = "https://localhost:5001", //should come from configuration
         ValidAudience = "https://localhost:5001", //should come from configuration
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["SecretKey"]))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("8hTfGvUWfZXNz7Dk5JH7fF3sDq8fJ9x2"))
     };
-});
+});   
 
 
 var app = builder.Build();
@@ -77,6 +78,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.MapControllers();
 app.Run();

@@ -18,6 +18,6 @@ public class ApbdContext : DbContext
     public DbSet<Patient> Patients { get; set; }
     public DbSet<Prescription> prescriptions { get; set; }
     public DbSet<Prescription_Medicament> prescriptionMedicaments { get; set; }
-    public DbSet<AppUser> Users { get; set; }
+    public DbSet<AppUser> Uzytkownicy { get; set; }
     
 }

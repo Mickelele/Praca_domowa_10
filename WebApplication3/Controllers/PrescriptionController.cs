@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using WebApplication3.DTO_s;
 using WebApplication3.Services;
 
 namespace WebApplication3.Controllers;
 
-
+[Authorize(Roles = "user")]
 [ApiController]
 [Route("api/prescriptions")]
 public class PrescriptionController : ControllerBase

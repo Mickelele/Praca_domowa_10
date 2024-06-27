@@ -9,8 +9,11 @@ using Microsoft.IdentityModel.Tokens;
 using WebApplication3.Context;
 using WebApplication3.Models;
 using WebApplication3.Services;
-using LoginRequest = WebApplication3.Models.LoginRequest;
-using RegisterRequest = WebApplication3.Models.RegisterRequest;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using WebApplication3.Helpers;
 
 namespace WebApplication3.Controllers;
 
@@ -30,22 +33,20 @@ public class PatientController : ControllerBase
     
     [AllowAnonymous]
     [HttpPost("register")]
-    public IActionResult RegisterPatient(RegisterRequest model)
+    public IActionResult RegisterPatient(RegisterUser model)
     {
-        var hashedPasswordAndSalt = SecurityHelper.GetHashedPasswordAndSalt(model.Password);
-
+        var hashedPasswordAndSalt = SecurityHelpers.GetHashedPasswordAndSalt(model.Password);
 
         var user = new AppUser()
         {
-            Email = model.Email,
             Login = model.Login,
             Password = hashedPasswordAndSalt.Item1,
             Salt = hashedPasswordAndSalt.Item2,
-            RefreshToken = SecurityHelper.GenerateRefreshToken(),
+            RefreshToken = SecurityHelpers.GenerateRefreshToken(),
             RefreshTokenExp = DateTime.Now.AddDays(1)
         };
 
-        _context.Users.Add(user);
+        _context.Uzytkownicy.Add(user);
         _context.SaveChanges();
 
         return Ok();
@@ -54,12 +55,12 @@ public class PatientController : ControllerBase
     
     [AllowAnonymous]
     [HttpPost("login")]
-    public IActionResult Login(LoginRequest loginRequest)
+    public IActionResult Login(LoginUser loginRequest)
     {
-        AppUser user = _context.Users.Where(u => u.Login == loginRequest.Login).FirstOrDefault();
+        AppUser user = _context.Uzytkownicy.Where(u => u.Login == loginRequest.Login).First();
 
         string passwordHashFromDb = user.Password;
-        string curHashedPassword = SecurityHelper.GetHashedPasswordWithSalt(loginRequest.Password, user.Salt);
+        string curHashedPassword = SecurityHelpers.GetHashedPasswordWithSalt(loginRequest.Password, user.Salt);
 
         if (passwordHashFromDb != curHashedPassword)
         {
@@ -67,27 +68,26 @@ public class PatientController : ControllerBase
         }
 
 
-        Claim[] userclaim = new[]
+        var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, "pgago"),
-            new Claim(ClaimTypes.Role, "user"),
-            new Claim(ClaimTypes.Role, "admin")
-            //Add additional data here
+            new Claim(ClaimTypes.Name, user.Login)
         };
+        claims.Add(new Claim(ClaimTypes.Role, "user"));
+        
 
-        SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SecretKey"));
+        SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("8hTfGvUWfZXNz7Dk5JH7fF3sDq8fJ9x2"));
 
         SigningCredentials creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         JwtSecurityToken token = new JwtSecurityToken(
             issuer: "https://localhost:5001",
             audience: "https://localhost:5001",
-            claims: userclaim,
+            claims: claims,
             expires: DateTime.Now.AddMinutes(10),
             signingCredentials: creds
         );
 
-        user.RefreshToken = SecurityHelper.GenerateRefreshToken();
+        user.RefreshToken = SecurityHelpers.GenerateRefreshToken();
         user.RefreshTokenExp = DateTime.Now.AddDays(1);
         _context.SaveChanges();
 
@@ -99,55 +99,49 @@ public class PatientController : ControllerBase
     }
     
     
-    [Authorize(AuthenticationSchemes = "IgnoreTokenExpirationScheme")]
-    [HttpPost("refresh")]
-    public IActionResult Refresh(RefreshTokenRequest refreshToken)
+    
+    [AllowAnonymous]
+    [HttpPost("refresh-token")]
+    public IActionResult RefreshToken([FromBody] RefreshTokenRequest request)
     {
-        AppUser user = _context.Users.Where(u => u.RefreshToken == refreshToken.RefreshToken).FirstOrDefault();
-        if (user == null)
+        var user = _context.Uzytkownicy.SingleOrDefault(u => u.RefreshToken == request.RefreshToken);
+
+        if (user == null || user.RefreshTokenExp <= DateTime.Now)
         {
-            throw new SecurityTokenException("Invalid refresh token");
+            return Unauthorized();
         }
 
-        if (user.RefreshTokenExp < DateTime.Now)
+        var claims = new List<Claim>
         {
-            throw new SecurityTokenException("Refresh token expired");
-        }
-        
-        Claim[] userclaim = new[]
-        {
-            new Claim(ClaimTypes.Name, "pgago"),
-            new Claim(ClaimTypes.Role, "user"),
-            new Claim(ClaimTypes.Role, "admin")
-            //Add additional data here
+            new Claim(ClaimTypes.Name, user.Login),
+            new Claim(ClaimTypes.Role, "user")
         };
 
-        SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SecretKey"));
-
+        SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("8hTfGvUWfZXNz7Dk5JH7fF3sDq8fJ9x2"));
         SigningCredentials creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        JwtSecurityToken jwtToken = new JwtSecurityToken(
+        JwtSecurityToken token = new JwtSecurityToken(
             issuer: "https://localhost:5001",
             audience: "https://localhost:5001",
-            claims: userclaim,
+            claims: claims,
             expires: DateTime.Now.AddMinutes(10),
             signingCredentials: creds
         );
 
-        user.RefreshToken = SecurityHelper.GenerateRefreshToken();
+        user.RefreshToken = SecurityHelpers.GenerateRefreshToken();
         user.RefreshTokenExp = DateTime.Now.AddDays(1);
         _context.SaveChanges();
 
         return Ok(new
         {
-            accessToken = new JwtSecurityTokenHandler().WriteToken(jwtToken),
+            accessToken = new JwtSecurityTokenHandler().WriteToken(token),
             refreshToken = user.RefreshToken
         });
     }
     
     
 
-
+    [Authorize(Roles = "user")]
     [HttpGet("{id:int}")]
     public async Task<IActionResult> getPatientInfo(int id)
     {

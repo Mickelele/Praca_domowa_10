@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WebApplication3.Migrations
 {
     /// <inheritdoc />
-    public partial class CreateModels : Migration
+    public partial class AuthTry1 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -54,6 +54,24 @@ namespace WebApplication3.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Patients", x => x.IdPatient);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Uzytkownicy",
+                columns: table => new
+                {
+                    IdUser = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Login = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Salt = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Rola = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RefreshTokenExp = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Uzytkownicy", x => x.IdUser);
                 });
 
             migrationBuilder.CreateTable(
@@ -131,6 +149,9 @@ namespace WebApplication3.Migrations
         {
             migrationBuilder.DropTable(
                 name: "prescriptionMedicaments");
+
+            migrationBuilder.DropTable(
+                name: "Uzytkownicy");
 
             migrationBuilder.DropTable(
                 name: "Medicaments");
