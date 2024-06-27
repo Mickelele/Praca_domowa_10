@@ -141,3 +141,4 @@ X:\GitHub\WebApplication3\WebApplication3\obj\Debug\net8.0\refint\WebApplication
 X:\GitHub\WebApplication3\WebApplication3\obj\Debug\net8.0\WebApplication3.pdb
 X:\GitHub\WebApplication3\WebApplication3\obj\Debug\net8.0\WebApplication3.genruntimeconfig.cache
 X:\GitHub\WebApplication3\WebApplication3\obj\Debug\net8.0\ref\WebApplication3.dll
+X:\GitHub\WebApplication3\WebApplication3\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
